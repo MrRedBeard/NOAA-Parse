@@ -1,0 +1,12 @@
+body.nonav670, body.nav1024 {background:none; font-family:"Times New Roman",Times,serif; font-size:10pt; margin:0px; padding:0px; width:100%}
+.header670 {background:none; text-align:center;}
+div.figure {margin-left:auto; margin-right:auto; width:600px}
+div.figure p {text-align:center}
+.title_small, .title_large{color:#000}
+
+h3 {font-size:18pt; text-align:center}
+
+#mainnav1024, #mainnonav670 {width:100%; margin:0px}
+#footer1024 {top:-20px}
+pre {padding:0px; margin:0px}
+#leftnav, #noaalink, #nwslink670, #nwslink, #nwslink1024, #topnav670, #topnav1024, .topnav1024, #tag1024, #footer1024td1, #footer1024td3, #footer1024td4, .skipnav, #noprint, .noprint, #footer670, .header1024  {display:none}

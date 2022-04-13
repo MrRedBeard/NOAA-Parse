@@ -1,2 +1,2 @@
 # NOAA-Parse
-Parsing NOAA Forecast &amp; Alerts
+Console App to parse NOAA Forecast &amp; Tornado Watch Warnings (Alerts)

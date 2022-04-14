@@ -22,383 +22,272 @@ namespace noaa_parse
     class NOAA
     {
         public NOAAForecastJson Forecast { get;set; }
+        public List<NOAAAlerts> Alerts { get; set; }
         public bool debug = true;
 
         public NOAA()
         {
             Forecast = getNOAAForecastJson();
-            GetWarnings();
+            Alerts = GetAlerts();
         }
 
-        public void GetWarnings()
+        public List<NOAAAlerts> GetAlerts()
         {
             List<string> urls = new List<string>();
+            List<NOAAAlerts> alerts = new List<NOAAAlerts>();
 
             for (int i = 0; i < Forecast.data.hazard.Length; i++)
             {
-                if(Forecast.data.hazard[i].ToLower().Contains("tornado") || Forecast.data.hazard[i].ToLower().Contains("tornado watch") || Forecast.data.hazard[i].ToLower().Contains("hazard"))
+                //Add all hazards
+                urls.Add(Forecast.data.hazardUrl[i]);
+            }
+
+            List<NOAAAlerts> tempAlerts = new List<NOAAAlerts>();
+            foreach (string url in urls)
+            {
+                tempAlerts.AddRange(getAlertsHtml(url));
+            }
+
+            //Prevent Duplicates
+            foreach (NOAAAlerts tempAlert in tempAlerts)
+            {
+                int exists = alerts
+                .Where(x => x.Type.ToLower() == tempAlert.Type.ToLower() && x.ExpireDateTime.Value.ToString() == tempAlert.ExpireDateTime.Value.ToString()).ToList().Count;
+
+                if (exists <= 0)
                 {
-                    urls.Add(Forecast.data.hazardUrl[i]);
+                    alerts.Add(tempAlert);
                 }
             }
 
-            foreach (string url in urls)
-            {
-                string data = getWarningHtml(url);
-            }
+            return alerts;
         }
 
-        public string getWarningHtml(string url)
+        public List<NOAAAlerts> getAlertsHtml(string url)
         {
-            string result = "";
+            List<NOAAAlerts> alerts = new List<NOAAAlerts>();
+
+            string webRequestResultText = "";
+            HtmlDocument warningHtml = new HtmlDocument();
 
             if (debug)
             {
-                result = @"
+                webRequestResultText = @"
   <!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN' 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>
-  <html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en'><head>
-  <meta http-equiv='Content-Type' content='text/html; charset=ISO-8859-1' />
-  <title>WWA Summary by Location with ARZ044/ARC119/ARZ044 emphasis Tornado Watch</title>
-  <meta name='title' content='National Weather Service Watch Warning Advisory Summary' />
-  <meta name='description' content='The National Weather Service is your best source for complete weather forecast and weather related information on the web!' />
-  <meta name='keywords' content='weather, local weather forecast, local forecast, weather forecasts, local weather, radar, fire weather, center weather service units, JetStream' />
-  <meta name='rating' content='General' />
-  <meta name='DC.publisher' content='NWS Southern Region HQ Fort Worth, Texas' />
-  <meta name='DC.contributor' content='NWS Southern Region HQ Fort Worth, Texas' />
-  <meta name='DC.rights' content='http://www.weather.gov/disclaimer.php' />
-  <meta name='DC.author' content='NWS Southern Region HQ Fort Worth, Texas (Dennis Cain and Leon Minton)' />
-  <meta name='robots' content='index,follow' />
-  <link rel='STYLESHEET' type='text/css' href='css/main_041007.css' title='nws' />
-  <link rel='STYLESHEET' type='text/css' href='css/print_041007.css' title='nws' media='print' />
-  <link href='/images/favicon.ico' rel='shortcut icon' />
-  </head>
-  <body class='nonav670'>
-    <div class='header670'>
-    	<div class='rightalign'><a href='http://weather.gov' class='noprint' title='Go to the NWS Homepage'>weather.gov</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
-    	<span class='title_small'>National Weather Service</span><br /><br />
-    	<span class='title_large'>Watches, Warnings &amp; Advisories</span>
-        </div>
-        <div id='noaalink'><a href='http://www.noaa.gov'><img src='/images/wtf/noaalink.gif' alt='Go to the NOAA Homepage' width='80' height='80' /></a></div>
-        <div id='nwslink670'><a href='http://www.nws.noaa.gov'><img src='/images/wtf/noaalink.gif' alt='NWS Homepage' width='80' height='80' /></a></div>
-        <div id='topnav670'>
-    	<label for='zipcity' class='yellow'>Local weather forecast by &quot;City, St&quot; or zip code</label> 
-    	<form method='post' action='/zipcity.php'>
-  	    <div class='searchinput'>
-      		<input type='text' id='zipcity' name='inputstring' size='10' value='City, St' /> 
-      		<input type='submit' name='Go2' value='Go' />
-  	    </div>
-    	</form>
-    </div><div id='mainnonav670' style='position:relative !important; top:0px !important;'>	<div id='content'><br />4 products issued by NWS for: North Little Rock Airport AR  <!-- AddThis Button BEGIN -->
-	<div class='addthis_toolbox addthis_default_style ' style='float:right;'>
-	<a href='//www.addthis.com/bookmark.php?v=250&amp;pubid=ra-5127a6364d551d04' class='addthis_button_compact'>Share</a> 
-	<span class='addthis_separator'>|</span>
-	<a class='addthis_button_preferred_1'></a>
-	<a class='addthis_button_preferred_2'></a>
-	<a class='addthis_button_preferred_3'></a>
-	<a class='addthis_button_preferred_4'></a>
-	<a class='addthis_button_preferred_5'></a>
-	</div>
-	<!-- AddThis Button END -->   <hr /><br /><h3>Tornado Watch</h3><pre>
-WATCH COUNTY NOTIFICATION FOR WATCHES 120/122
-NATIONAL WEATHER SERVICE LITTLE ROCK AR
-221 PM CDT WED APR 13 2022
+<!-- saved from url=(0079)https://forecast.weather.gov/wwamap/wwatxtget.php?cwa=JAN&wwa=tornado%20warning -->
+<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en'><head><meta http-equiv='Content-Type' content='text/html; charset=UTF-8'>
 
-ARC011-013-019-023-025-039-045-051-053-059-063-067-069-075-085-
-097-103-105-109-117-119-121-125-135-145-147-132200-
-/O.CON.KLZK.TO.A.0120.000000T0000Z-220413T2200Z/
+<title>WWA Summary for Tornado Warning Issued by JAN</title><meta name='title' content='National Weather Service Watch Warning Advisory Summary'>
+<meta name='description' content='The National Weather Service is your best source for complete weather forecast and weather related information on the web!'>
+<meta name='keywords' content='weather, local weather forecast, local forecast, weather forecasts, local weather, radar, fire weather, center weather service units, JetStream'>
+<meta name='rating' content='General'>
+<meta name='DC.publisher' content='NWS Southern Region HQ Fort Worth, Texas'>
+<meta name='DC.contributor' content='NWS Southern Region HQ Fort Worth, Texas'>
+<meta name='DC.rights' content='http://www.weather.gov/disclaimer.php'>
+<meta name='DC.author' content='NWS Southern Region HQ Fort Worth, Texas (Dennis Cain and Leon Minton)'>
+<meta name='robots' content='index,follow'>
+<link rel='STYLESHEET' type='text/css' href='./WWA Summary for Tornado Warning Issued by JAN_files/main_041007.css' title='nws'>
+<link rel='STYLESHEET' type='text/css' href='./WWA Summary for Tornado Warning Issued by JAN_files/print_041007.css' title='nws' media='print'>
+<link href='https://forecast.weather.gov/images/favicon.ico' rel='shortcut icon'>
 
-TORNADO WATCH 120 REMAINS VALID UNTIL 5 PM CDT THIS AFTERNOON FOR
-THE FOLLOWING AREAS
+<meta name='d41d8cd98f00b204e9800998ecf8427e_lib_detect' id='d41d8cd98f00b204e9800998ecf8427e_lib_detect'><script src='chrome-extension://cgaocdmhkmfnkdkbnckgmpopcbpaaejo/library/libraries.js'></script><script src='chrome-extension://cgaocdmhkmfnkdkbnckgmpopcbpaaejo/content_scripts/lib_detect.js'></script></head>
+<body class='nonav670'>
+<div class='header670'>
+<div class='rightalign'><a href='http://weather.gov/' class='noprint' title='Go to the NWS Homepage'>weather.gov</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+<span class='title_small'>National Weather Service</span><br>
+<br>
+<span class='title_large'>Watches, Warnings &amp; Advisories</span></div>
+<div id='noaalink'><a href='http://www.noaa.gov/'><img src='./WWA Summary for Tornado Warning Issued by JAN_files/noaalink.gif' alt='Go to the NOAA Homepage' width='80' height='80'></a></div>
+<div id='nwslink670'><a href='http://www.nws.noaa.gov/'><img src='./WWA Summary for Tornado Warning Issued by JAN_files/noaalink.gif' alt='NWS Homepage' width='80' height='80'></a></div>
+<div id='topnav670'><label for='zipcity' class='yellow'>Local weather
+forecast by 'City, St' or zip code</label>
+<form method='post' action='https://forecast.weather.gov/zipcity.php'>
+<div class='searchinput'><input type='text' id='zipcity' name='inputstring' size='10' value='City, St'> <input type='submit' name='Go2' value='Go'></div>
+</form>
+</div>
 
-IN ARKANSAS THIS WATCH INCLUDES 26 COUNTIES
+<!-- main content -->
 
-IN CENTRAL ARKANSAS
+<div id='mainnonav670'><div id='content'>
+<br><h3>Tornado Warning</h3><hr><pre>Severe Weather Statement
+National Weather Service Jackson MS
+618 PM CDT Wed Apr 13 2022
 
-FAULKNER              GARLAND               GRANT
-LONOKE                PERRY                 PRAIRIE
-PULASKI               SALINE                WHITE
+LAC065-132330-
+/O.CON.KJAN.TO.W.0060.000000T0000Z-220413T2330Z/
+Madison LA-
+618 PM CDT Wed Apr 13 2022
 
-IN EASTERN ARKANSAS
+...A TORNADO WARNING REMAINS IN EFFECT UNTIL 630 PM CDT FOR MADISON
+PARISH...
 
-JACKSON               LAWRENCE              RANDOLPH
-WOODRUFF
+At 618 PM CDT, a severe thunderstorm capable of producing a tornado
+was located over Tendal, or 9 miles west of Tallulah, moving east at
+60 mph.
 
-IN NORTH CENTRAL ARKANSAS
+HAZARD...Tornado.
 
-CLEBURNE              INDEPENDENCE          SHARP
+SOURCE...Radar indicated rotation.
 
-IN SOUTHEAST ARKANSAS
+IMPACT...Flying debris will be dangerous to those caught without
+         shelter. Mobile homes will be damaged or destroyed. Damage
+         to roofs, windows, and vehicles will occur.  Tree damage is
+         likely.
 
-BRADLEY               CLEVELAND             JEFFERSON
+This dangerous storm will be near...
+  Tallulah around 625 PM CDT.
+  Omega and Mansford around 630 PM CDT.
 
-IN SOUTHWEST ARKANSAS
-
-CALHOUN               CLARK                 DALLAS
-HOT SPRING            OUACHITA              PIKE
-
-IN WESTERN ARKANSAS
-
-MONTGOMERY
-
-THIS INCLUDES THE CITIES OF ARKADELPHIA, ASH FLAT, ATTICA,
-AUGUSTA, BATESVILLE, BEEBE, BENTON, BRYANT, CABOT, CAMDEN,
-CAVE CITY, CONWAY, COTTON PLANT, DE VALLS BLUFF, DES ARC,
-FORDYCE, GLENWOOD, HAMPTON, HARDY, HAZEN, HEBER SPRINGS,
-HOT SPRINGS, HOXIE, KINGSLAND, LITTLE ROCK, LONOKE, MALVERN,
-MCCRORY, MOUNT IDA, MURFREESBORO, NEWPORT, NORMAN,
-NORTH LITTLE ROCK, PERRYVILLE, PINE BLUFF, POCAHONTAS, RISON,
-SEARCY, SHERIDAN, THORNTON, WALNUT RIDGE, AND WARREN.
-
-$$
-
-</pre><hr/><br/><h3>Flash Flood Warning</h3><pre>
-Flash Flood Warning
-ARC045-085-119-125-145-132200-
-/O.NEW.KLZK.FF.W.0016.220413T1950Z-220413T2150Z/
-/00000.0.ER.000000T0000Z.000000T0000Z.000000T0000Z.OO/
-
-BULLETIN - EAS ACTIVATION REQUESTED
-Flash Flood Warning
-National Weather Service Little Rock AR
-250 PM CDT Wed Apr 13 2022
-
-The National Weather Service in Little Rock has issued a
-
-* Flash Flood Warning for...
-  Southeastern Faulkner County in central Arkansas...
-  Northwestern Lonoke County in central Arkansas...
-  Central Pulaski County in central Arkansas...
-  Central Saline County in central Arkansas...
-  Southwestern White County in central Arkansas...
-
-* Until 450 PM CDT.
-
-* At 250 PM CDT, Doppler radar indicated thunderstorms producing
-  heavy rain across the warned area. Between 1 and 2 inches of rain
-  have fallen. The expected rainfall rate is 1 to 2 inches in 1
-  hour. Flash flooding is ongoing or expected to begin shortly.
-
-  HAZARD...Flash flooding caused by thunderstorms.
-
-  SOURCE...Radar.
-
-  IMPACT...Flash flooding of small creeks and streams, urban
-           areas, highways, streets and underpasses as well as
-           other poor drainage and low-lying areas.
-
-* Some locations that will experience flash flooding include...
-  Little Rock, North Little Rock, Benton, Sherwood, Jacksonville,
-  Cabot, West Little Rock, Maumelle, Bryant, Downtown Little Rock,
-  North Little Rock Airport, Little Rock AFB, Southwest Little Rock,
-  Beebe, Ward, Haskell, Vilonia, Shannon Hills, Austin in Lonoke
-  County and Argenta.
+Other locations impacted by this tornadic thunderstorm include Mound
+and Richmond.
 
 PRECAUTIONARY/PREPAREDNESS ACTIONS...
 
-Turn around, don`t drown when encountering flooded roads. Most flood
-deaths occur in vehicles.
+TAKE COVER NOW! Move to a basement or an interior room on the lowest
+floor of a sturdy building. Avoid windows. If you are outdoors, in a
+mobile home, or in a vehicle, move to the closest substantial shelter
+and protect yourself from flying debris.
 
-&&
+&amp;&amp;
 
-LAT...LON 3477 9260 3493 9236 3522 9201 3523 9189
-      3519 9183 3510 9182 3502 9187 3488 9202
-      3476 9218 3452 9241 3448 9256 3451 9269
-      3464 9267
+LAT...LON 3225 9152 3230 9152 3234 9148 3235 9150
+      3236 9145 3240 9149 3249 9148 3254 9137
+      3255 9112 3248 9111 3244 9102 3236 9100
+      3233 9093 3221 9124 3223 9128 3220 9132
+      3221 9154 3223 9151 3225 9156
+TIME...MOT...LOC 2318Z 249DEG 51KT 3246 9134
 
-FLASH FLOOD...RADAR INDICATED
-EXPECTED RAINFALL RATE...1-2 INCHES IN 1 HOUR
-
-$$
-
-Cavanaugh
-
-</pre><hr/><br/><h3>Hazardous Weather Outlook</h3><pre>
-Hazardous Weather Outlook
-National Weather Service Little Rock AR
-404 AM CDT Wed Apr 13 2022
-
-ARZ004>008-014>017-024-025-031>034-039-042>047-052>057-062>069-
-103-112-113-121>123-130-137-138-140-141-203-212-213-221>223-230-
-237-238-240-241-313-340-341-141000-
-Marion-Baxter-Fulton-Sharp-Randolph-Stone-Izard-Independence-
-Lawrence-Cleburne-Jackson-Conway-Faulkner-White-Woodruff-Perry-
-Garland-Saline-Pulaski-Lonoke-Prairie-Monroe-Pike-Clark-
-Hot Spring-Grant-Jefferson-Arkansas-Dallas-Cleveland-Lincoln-
-Desha-Ouachita-Calhoun-Bradley-Drew-Boone County Except Southwest-
-Newton County Higher Elevations-Searcy County Lower Elevations-
-Southern Johnson County-Southern Pope County-
-Southeast Van Buren County-Western and Northern Logan County-
-Northern Scott County-Northwest Yell County-
-Polk County Lower Elevations-
-Central and Eastern Montgomery County-
-Boone County Higher Elevations-Newton County Lower Elevations-
-Northwest Searcy County Higher Elevations-
-Johnson County Higher Elevations-Pope County Higher Elevations-
-Van Buren County Higher Elevations-
-Southern and Eastern Logan County-
-Central and Southern Scott County-Yell Excluding Northwest-
-Northern Polk County Higher Elevations-
-Northern Montgomery County Higher Elevations-
-Eastern, Central, and Southern Searcy County Higher Elevations-
-Southeast Polk County Higher Elevations-
-Southwest Montgomery County Higher Elevations-
-404 AM CDT Wed Apr 13 2022
-
-This Hazardous Weather Outlook is for a Large Part of Arkansas.
-
-.DAY ONE...Today and Tonight
-
-Showers and thunderstorms continue in the forecast today and
-tonight as a cold front moves through the state. Some strong to
-severe thunderstorms will be possible today into the evening.
-Damaging winds and large hail will be possible and a few tornadoes
-cannot be ruled out. Mid morning through early evening will be
-the best timing for severe thunderstorms. Heavy rainfall may also
-be seen. With gusty south winds today up to 35 mph, caution is
-advised on area lakes and rivers.
-
-Expect the threat for strong to severe thunderstorms to decrease
-mid evening.
-
-.DAYS TWO THROUGH SEVEN...Thursday Through Tuesday
-
-Some patchy frost may be seen Thursday morning. Otherwise...expect
-the threat for hazardous weather to remain low into Friday morning.
-
-Showers and thunderstorms return to the forecast late Friday and
-through the weekend as a slow moving front moves through the state.
-While a few strong to severe thunderstorms could be seen over the
-weekend...widespread and organized severe weather is not anticipated
-at this time. Given the slow  moving nature of the front...some
-locally heavy rainfall could be seen over the weekend...which may
-lead to an isolated flash flood threat.
-
-Expect the threat for hazardous weather to become low by early next
-week.
-
-.Spotter Information Statement...
-
-Spotter activation may be needed each day through Wednesday
-evening.
-
-&&
-
-Visit NWS Little Rock on the web. Go to http://weather.gov/lzk.
+TORNADO...RADAR INDICATED
+MAX HAIL SIZE...&lt;.75 IN
 
 $$
 
-51/62
+DC</pre><hr><pre>Severe Weather Statement
+National Weather Service Jackson MS
+612 PM CDT Wed Apr 13 2022
 
-</pre><hr/><br/><h3>Wind Advisory</h3><pre>
-URGENT - WEATHER MESSAGE
-National Weather Service Little Rock AR
-334 AM CDT Wed Apr 13 2022
+MSC049-121-132345-
+/O.CON.KJAN.TO.W.0061.000000T0000Z-220413T2345Z/
+Rankin MS-Hinds MS-
+612 PM CDT Wed Apr 13 2022
 
-ARZ016-025-033-034-044>047-056-057-064-065-132100-
-/O.NEW.KLZK.WI.Y.0004.220413T1500Z-220414T0000Z/
-Independence-Jackson-White-Woodruff-Pulaski-Lonoke-Prairie-Monroe-
-Jefferson-Arkansas-Lincoln-Desha-
-Including the cities of Batesville, Newport, Searcy, Beebe,
-Augusta, McCrory, Cotton Plant, Little Rock, North Little Rock,
-Cabot, Lonoke, Des Arc, Hazen, De Valls Bluff, Brinkley,
-Clarendon, Pine Bluff, Stuttgart, De Witt, Star City, Gould,
-Dumas, and McGehee
-334 AM CDT Wed Apr 13 2022
+...A TORNADO WARNING REMAINS IN EFFECT UNTIL 645 PM CDT FOR CENTRAL
+RANKIN AND EAST CENTRAL HINDS COUNTIES...
 
-...WIND ADVISORY IN EFFECT FROM 10 AM THIS MORNING TO 7 PM CDT
-THIS EVENING...
+At 612 PM CDT, a severe thunderstorm capable of producing a tornado
+was located over Pearl, moving northeast at 40 mph.
 
-* WHAT...South winds 15 to 25 mph with gusts up to 35 mph
-  expected.
+HAZARD...Tornado and ping pong ball size hail.
 
-* WHERE...Portions of central, eastern, north central and
-  southeast Arkansas.
+SOURCE...Radar indicated rotation.
 
-* WHEN...From 10 AM this morning to 7 PM CDT this evening.
+IMPACT...Flying debris will be dangerous to those caught without
+         shelter. Mobile homes will be damaged or destroyed. Damage
+         to roofs, windows, and vehicles will occur.  Tree damage is
+         likely.
 
-* IMPACTS...Gusty winds could blow around unsecured objects.
-  Tree limbs could be blown down and a few power outages may
-  result.
+This dangerous storm will be near...
+  Flowood around 615 PM CDT.
+  Brandon around 620 PM CDT.
+  Fannin around 630 PM CDT.
 
 PRECAUTIONARY/PREPAREDNESS ACTIONS...
 
-Use extra caution when driving, especially if operating a high
-profile vehicle. Secure outdoor objects.
+TAKE COVER NOW! Move to a basement or an interior room on the lowest
+floor of a sturdy building. Avoid windows. If you are outdoors, in a
+mobile home, or in a vehicle, move to the closest substantial shelter
+and protect yourself from flying debris.
 
-&&
+&amp;&amp;
+
+LAT...LON 3222 9021 3232 9024 3248 8988 3229 8981
+TIME...MOT...LOC 2312Z 240DEG 33KT 3229 9012
+
+TORNADO...RADAR INDICATED
+MAX HAIL SIZE...1.50 IN
 
 $$
 
-51
+86</pre><hr><pre>Severe Weather Statement
+National Weather Service Memphis TN
+609 PM CDT Wed Apr 13 2022
 
-</pre><hr/><br/></div></div>    <div id='footer670'>
-  	<div id='footer670td2'>
-  	    U.S. Dept. of Commerce<br />
-  	    NOAA National Weather Service<br />
-  	    1325 East West Highway<br />
-  	    Silver Spring, MD 20910<br />
-  	    E-mail: <a href='mailto:w-nws.webmaster@noaa.gov'>w-nws.webmaster@noaa.gov</a><br />
-  	    Page last modified: May 16, 2007
-  	</div>
-  	<div id='footer670td3'><input type='button' value='Back to previous page' onclick='history.back()' /></div>
-    	<div id='footer670td4'>
-    	    <ul>
-    	    <li><a href='http://www.weather.gov/disclaimer.php'>Disclaimer</a></li>
-    	    <li><a href='http://www.weather.gov/credits.php'>Credits</a></li>
-    	    <li><a href='http://www.weather.gov/glossary/'>Glossary</a></li>
-    	    <li><a href='http://weather.gov/privacy.php'>Privacy Policy</a></li>
-    	    <li><a href='http://www.weather.gov/admin.php'>About Us</a></li>
-    	    <li><a href='http://www.weather.gov/careers.php'>Career Opportunities</a></li>
-    	    </ul>
-    	</div>
-  	 <div id='tag670'>NATIONAL WEATHER SERVICE: <span class='italic'>for Safety, for Work, for Fun</span> - FOR LIFE</div>
-    </div>
+MSC009-093-139-132330-
+/O.CON.KMEG.TO.W.0039.000000T0000Z-220413T2330Z/
+Marshall MS-Tippah MS-Benton MS-
+609 PM CDT Wed Apr 13 2022
 
-  </body>
-</html>";
-                HtmlDocument warningHtml = new HtmlDocument();
-                warningHtml.LoadHtml(result);
+...A TORNADO WARNING REMAINS IN EFFECT UNTIL 630 PM CDT FOR
+SOUTHEASTERN MARSHALL...WESTERN TIPPAH AND BENTON COUNTIES...
 
-                var document = warningHtml.DocumentNode.QuerySelector("#content");
+At 609 PM CDT, a severe thunderstorm producing a tornado was located
+near Snow Lake Shores, or 13 miles east of Holly Springs, moving east
+at 40 mph.
 
-                var headers = document.QuerySelectorAll("h3").ToList();
-                var warning = document.QuerySelectorAll("pre").ToList();
+HAZARD...Tornado.
 
-                for (int i = 0; i < headers.Count(); i++)
-                {
-                    if(headers[i].InnerText.ToLower().Contains("tornado"))
-                    {
-                        Console.WriteLine(headers[i].InnerText);
+SOURCE...Radar indicated rotation.
 
-                        var x = warning[i].InnerText.Split('\r');
+IMPACT...Flying debris will be dangerous to those caught without
+         shelter. Mobile homes will be damaged or destroyed. Damage
+         to roofs, windows, and vehicles will occur.  Tree damage is
+         likely.
 
-                        Regex regexExpireTime = new Regex(@"\/*\.*\.*\.*\.*\S*Z/"); //Regex to match expire datetime
-                        var xx = regexExpireTime.Match(warning[i].InnerText);
-                    }
-                }
+Locations impacted include...
+Ripley, Blue Mountain, Snow Lake Shores, Canaan, Gravestown, Walnut,
+Ashland, Potts Camp, Falkner, Murry, Brody, Spring Hill, New Canaan,
+Lake Center, Brownfield, Whitten Town, Pine Grove, Hamilton, Bethel
+and Tiplersville.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+TAKE COVER NOW! Move to a storm shelter or an interior room on the
+lowest floor of a sturdy building. Avoid windows. If you are
+outdoors, in a mobile home, or in a vehicle, move to the closest
+substantial shelter and protect yourself from flying debris.
+
+This cluster of thunderstorms is producing tornadoes and widespread
+significant wind damage. Do not wait to see or hear the tornado. For
+your protection move to an interior room on the lowest floor of a
+building.
+
+&amp;&amp;
+
+LAT...LON 3460 8948 3486 8920 3500 8917 3500 8888
+      3470 8890
+TIME...MOT...LOC 2309Z 263DEG 34KT 3475 8921
+
+TORNADO...RADAR INDICATED
+MAX HAIL SIZE...&lt;.75 IN
+
+$$
+
+KRM</pre><hr></div>
+<div id='footer670'>
+<div id='footer670td2'>U.S. Dept. of Commerce<br>
+NOAA National Weather Service<br>
+1325 East West Highway<br>
+Silver Spring, MD 20910<br>
+E-mail: <a href='mailto:w-nws.webmaster@noaa.gov'>w-nws.webmaster@noaa.gov</a><br>
+Page last modified: June 2, 2009</div>
+<div id='footer670td3'><input type='button' value='Back to previous page' onclick='history.back()'></div>
+<div id='footer670td4'>
+<ul>
+	<li><a href='http://www.weather.gov/disclaimer.php'>Disclaimer</a></li>
+	<li><a href='http://www.weather.gov/credits.php'>Credits</a></li>
+	<li><a href='http://www.weather.gov/glossary/'>Glossary</a></li>
+	<li><a href='http://weather.gov/privacy.php'>Privacy Policy</a></li>
+	<li><a href='http://www.weather.gov/admin.php'>About Us</a></li>
+	<li><a href='http://www.weather.gov/careers.php'>Career Opportunities</a></li>
+</ul>
+</div>
+<div id='tag670'>NATIONAL WEATHER SERVICE: <span class='italic'>for
+Safety, for Work, for Fun</span> - FOR LIFE</div>
+</div>
+</div>
 
 
-
-
-
-
-
-                //Parse Expire Time
-                //string expireDateTimeString = "ARC011-013-025-039-053-059-069-085-103-117-119-125-147-132215-/ O.CON.KLZK.TO.A.0120.000000T0000Z - 220413T2200Z";
-                //expireDateTimeString.LastIndexOf('-');
-                //expireDateTimeString = expireDateTimeString.Substring(expireDateTimeString.LastIndexOf('-') + 2);
-                //string expireDate = expireDateTimeString.Substring(0, expireDateTimeString.LastIndexOf('T'));
-                //string expireTime = expireDateTimeString.Substring(expireDateTimeString.LastIndexOf('T') + 1).Replace("Z", "");
-
-                //expireTime = expireTime.Substring(0, 2) + ":" + expireTime.Substring(2, 2);
-
-                //string expireDateYear = "20" + expireDate.Substring(0, 2);
-                //string expireDateMonth = expireDate.Substring(2, 2);
-                //string expireDateDay = expireDate.Substring(4, 2);
-
-                //string newDateString = expireDateMonth + "/" + expireDateDay + "/" + expireDateYear + " " + expireTime;
-
-                //DateTime expireDateTime = DateTime.Parse(newDateString).AddHours(-5);
+<div id='vgc^e&gt;fD1649892214499'></div></body></html>";
             }
             else
             {
@@ -414,32 +303,59 @@ $$
 
                     using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
                     {
-                        result = streamReader.ReadToEnd();
+                        webRequestResultText = streamReader.ReadToEnd();
                     }
-
-                    HtmlDocument warningHtml = new HtmlDocument();
-                    warningHtml.LoadHtml(result);
-
-                    // ARC011-013-025-039-053-059-069-085-103-117-119-125-147-132215-/ O.CON.KLZK.TO.A.0120.000000T0000Z - 220413T2200Z /
-                    // 220413T2200Z
-                    //        2200Z 10pm is 5pm in CST
-                    //DateTimeOffset.Parse(string).UtcDateTime
-
-
-                    //h3
-                    //pre
-
-                    //"NORTH LITTLE ROCK"
-                    //TORNADO WATCH
-                    //TORNADO WARNING
                 }
                 catch
                 {
-                    return getWarningHtml(url);
+                    return getAlertsHtml(url);
                 }
             }
 
-            return result;
+            warningHtml.LoadHtml(webRequestResultText);
+
+            HtmlNodeCollection documentNodes = warningHtml.DocumentNode.QuerySelector("#content").ChildNodes;
+
+            string alertType = "";
+            foreach (HtmlNode documentNode in documentNodes)
+            {
+                //Get all hazards
+                if (documentNode.Name == "h3")
+                {
+                    alertType = documentNode.InnerText.Trim();
+                }
+
+                if ((alertType != null && alertType != "") && documentNode.Name == "pre")
+                {
+                    NOAAAlerts alert = new NOAAAlerts();
+                    alert.Type = alertType;
+
+                    //Parse out expire date time
+                    DateTime? expireDateTime = null;
+                    try
+                    {
+                        //ARC011-013-025-039-053-059-069-085-103-117-119-125-147-132215-/ O.CON.KLZK.TO.A.0120.000000T0000Z - 220413T2200Z
+                        Regex regexExpireTime = new Regex(@"\/*\.*\.*\.*\.*\S*Z/"); //Regex to match expire datetime
+                        string expireDateTimeString = regexExpireTime.Match(documentNode.InnerText).ToString();
+                        expireDateTimeString = expireDateTimeString.Substring(expireDateTimeString.LastIndexOf('-') + 1).Replace("Z", "").Replace("/", "");
+                        string expireDate = expireDateTimeString.Substring(0, expireDateTimeString.LastIndexOf('T'));
+                        string expireTime = expireDateTimeString.Substring(expireDateTimeString.LastIndexOf('T') + 1);
+                        expireTime = expireTime.Substring(0, 2) + ":" + expireTime.Substring(2, 2);
+                        string expireDateYear = "20" + expireDate.Substring(0, 2);
+                        string expireDateMonth = expireDate.Substring(2, 2);
+                        string expireDateDay = expireDate.Substring(4, 2);
+                        expireDateTimeString = expireDateMonth + "/" + expireDateDay + "/" + expireDateYear + " " + expireTime;
+                        expireDateTime = DateTime.Parse(expireDateTimeString).AddHours(-5); //Convert Zulu to CST
+                    }
+                    catch (Exception) { }
+
+                    alert.ExpireDateTime = expireDateTime;
+                    alert.AlertText = documentNode.InnerText;
+                    alerts.Add(alert);
+                }
+            }
+            
+            return alerts;
         }
 
         public NOAAForecastJson getNOAAForecastJson()
@@ -483,6 +399,13 @@ $$
             NOAAForecastJson json = serializer.Deserialize<NOAAForecastJson>(result);
 
             return json;
+        }
+
+        public class NOAAAlerts
+        {
+            public string Type { get; set; }
+            public DateTime? ExpireDateTime { get; set; }
+            public string AlertText { get; set; }
         }
 
         public class NOAAForecastJson

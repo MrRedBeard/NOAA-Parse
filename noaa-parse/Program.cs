@@ -8,6 +8,7 @@ using System.Web.Script.Serialization;
 using HtmlAgilityPack;
 using Fizzler.Systems.HtmlAgilityPack;
 using System.Text.RegularExpressions;
+using System.Globalization;
 
 namespace noaa_parse
 {
@@ -19,16 +20,93 @@ namespace noaa_parse
         }
     }
 
-    class NOAA
+    class NOAA //Handling NOAA Format
     {
         public NOAAForecastJson Forecast { get;set; }
-        public List<NOAAAlerts> Alerts { get; set; }
+        public List<NOAAAlerts> Alerts { get; set; } //DB Friendly
+        public InternalNOAAForecast ParsedForecast = new InternalNOAAForecast(); //DB Friendly
+
         public bool debug = true;
 
         public NOAA()
         {
             Forecast = getNOAAForecastJson();
             Alerts = GetAlerts();
+
+            ParsedForecast = ParseForecast();
+        }
+
+        public InternalNOAAForecast ParseForecast()
+        {
+            InternalNOAAForecast inf = new InternalNOAAForecast();
+
+            //Current Observation
+            inf.stationObservation.Altimeter = float.Parse(Forecast.currentobservation.Altimeter);
+            inf.stationObservation.Barometer = float.Parse(Forecast.currentobservation.SLP);
+
+            string[] dateArr = Forecast.currentobservation.Date.Substring(0, Forecast.currentobservation.Date.Length - 7).Split(' ');
+            string date = dateArr[0] + ' ' + dateArr[1] + ' ' + DateTime.Now.Year + ' ' + dateArr[2];
+            inf.stationObservation.Date = DateTime.Parse(date);
+            
+            inf.stationObservation.DewPoint = int.Parse(Forecast.currentobservation.Dewp);
+            inf.stationObservation.Elevation = float.Parse(Forecast.currentobservation.elev);
+            inf.stationObservation.Icon = Forecast.currentobservation.Weatherimage.Split('.')[0];
+            inf.stationObservation.Latitude = float.Parse(Forecast.currentobservation.latitude);
+            inf.stationObservation.Longitude = float.Parse(Forecast.currentobservation.longitude);
+            inf.stationObservation.RelativeHumidity = int.Parse(Forecast.currentobservation.Relh);
+            inf.stationObservation.Temperature = int.Parse(Forecast.currentobservation.Temp);
+            inf.stationObservation.Visibility = float.Parse(Forecast.currentobservation.Visibility);
+            inf.stationObservation.WeatherText = Forecast.currentobservation.Weather;
+            
+            if(Forecast.currentobservation.WindChill != null || Forecast.currentobservation.WindChill != "" || Forecast.currentobservation.WindChill != "NA")
+            {
+                inf.stationObservation.WindChill = null;
+            }
+            else
+            {
+                inf.stationObservation.WindChill = int.Parse(Forecast.currentobservation.WindChill);
+            }
+            
+            inf.stationObservation.WindDirection = int.Parse(Forecast.currentobservation.Windd);
+            inf.stationObservation.WindGust = int.Parse(Forecast.currentobservation.Gust);
+            inf.stationObservation.WindSpeed = int.Parse(Forecast.currentobservation.Winds);
+
+            //InternalNOAAForecast.LocalForecast localForecast = new InternalNOAAForecast.LocalForecast();
+            string[] When = Forecast.time.startPeriodName;
+            string[] ForecastIcon = Forecast.data.iconLink;
+            string[] ForecastText = Forecast.data.text;
+            string[] ForecastTitle = Forecast.data.weather;
+            string[] Percip = Forecast.data.pop;
+            string[] Temp = Forecast.data.temperature;
+            string[] TempLabel = Forecast.time.tempLabel;
+
+            for (int i = 0; i < When.Length; i++)
+            {
+                InternalNOAAForecast.LocalForecast period = new InternalNOAAForecast.LocalForecast();
+                period.When = When[i];
+
+                string icon = ForecastIcon[i].Split('/')[ForecastIcon[i].Split('/').Length - 1].Split('.')[0];
+                period.Icon = icon;
+
+                period.WeatherText = ForecastText[i];
+                period.WeatherTitle = ForecastTitle[i];
+
+                if (Percip[i] != null && Percip[i] != "" && Percip[i] != "NA")
+                {
+                    period.PercPrecip = int.Parse(Percip[i]);
+                }
+                else
+                {
+                    period.PercPrecip = null;
+                }
+
+                period.Temperature = int.Parse(Temp[i]);
+                period.TemperatureLabel = TempLabel[i];
+
+                inf.localForecast.Add(period);
+            }
+
+            return inf;
         }
 
         public List<NOAAAlerts> GetAlerts()
@@ -62,7 +140,7 @@ namespace noaa_parse
 
             return alerts;
         }
-
+        
         public List<NOAAAlerts> getAlertsHtml(string url)
         {
             List<NOAAAlerts> alerts = new List<NOAAAlerts>();
@@ -362,7 +440,8 @@ Safety, for Work, for Fun</span> - FOR LIFE</div>
         {
             //JSON Forecast
             //#.YlcvqcjMKUl //NOAA random string to prevent cache issues // 11 chars
-            string JsonForecastURL = "https://forecast.weather.gov/MapClick.php?lat=34.82407365710183&lon=-92.27942868460316&unit=0&lg=english&FcstType=json" + "#" + RandomString(11);
+            //string JsonForecastURL = "https://forecast.weather.gov/MapClick.php?lat=34.82407365710183&lon=-92.27942868460316&unit=0&lg=english&FcstType=json";// + "#" + RandomString(11);
+            string JsonForecastURL = "https://forecast.weather.gov/MapClick.php?lat=34.8241&lon=-92.2794&unit=0&lg=english&FcstType=json";
 
             string result = "";
 
@@ -396,7 +475,16 @@ Safety, for Work, for Fun</span> - FOR LIFE</div>
             }
 
             JavaScriptSerializer serializer = new JavaScriptSerializer();
-            NOAAForecastJson json = serializer.Deserialize<NOAAForecastJson>(result);
+            NOAAForecastJson json = new NOAAForecastJson();
+
+            try
+            {
+                json = serializer.Deserialize<NOAAForecastJson>(result);
+            }
+            catch (Exception)
+            {
+                throw new Exception("JSON not currently available");
+            }
 
             return json;
         }
@@ -491,7 +579,57 @@ Safety, for Work, for Fun</span> - FOR LIFE</div>
                 .Select(s => s[random.Next(s.Length)]).ToArray());
         }
     }
+
+    public class InternalNOAAForecast
+    {
+        public List<LocalForecast> localForecast { get; set; }
+        public StationObservation stationObservation { get; set; }
+
+        public InternalNOAAForecast()
+        {
+            localForecast = new List<LocalForecast>();
+            stationObservation = new StationObservation();
+        }
+
+
+        public class LocalForecast
+        {
+            public string When { get; set; }
+            public string TemperatureLabel { get; set; }
+            public int? Temperature { get; set; }
+            public int? PercPrecip { get; set; }
+            public string WeatherTitle { get; set; }
+            public string WeatherText { get; set; }
+            public string Icon { get; set; }
+        }
+        
+        public class StationObservation
+        {
+            public float Elevation { get; set; }
+            public float Latitude { get; set; }
+            public float Longitude { get; set; }
+            public DateTime Date { get; set; }
+            public int Temperature { get; set; }
+            public string TemperatureLabel { get; set; }
+            public int DewPoint { get; set; }
+            public int RelativeHumidity { get; set; }
+            public int WindSpeed { get; set; }
+            public int WindDirection { get; set; }
+            public int WindGust { get; set; }
+            public string WeatherText { get; set; }
+            public string Icon { get; set; } //Image
+            public float Visibility { get; set; }
+            public float Altimeter { get; set; }
+            public float Barometer { get; set; } //SLP
+
+            public int? WindChill { get; set; }
+            //Heat Index
+
+        }
+    }
+    
 }
+
 
 
 

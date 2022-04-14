@@ -1,3 +1,5 @@
+**Status:** Initial working version. Not wired to a database yet.
+
 # NOAA-Parse
 c# Console App to parse NOAA Forecast &amp; Tornado Watch Warnings (Alerts)
 

@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("noaa-parse")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("c# Console App to parse NOAA Forecast & Hazard Alerts")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("noaa-parse")]

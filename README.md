@@ -5,6 +5,12 @@ c# Console App to parse NOAA Forecast & Hazard Alerts
 
 See Program.cs to review code
 
+## Want to get data for your location?
+
+Change Program.cs line 444 lat & lon. Keep decimal to 4 or less.
+
+"https://forecast.weather.gov/MapClick.php?lat=34.8241&lon=-92.2794&unit=0&lg=english&FcstType=json";
+
 ## Json Forecast
 
 Parses out forecast in DB friendly class format

@@ -1,9 +1,13 @@
-**Status:** Initial working version. Not wired to a database yet.
+**Status:** Working version. Wired to database.
 
 # NOAA-Parse
 c# Console App to parse NOAA Forecast & Hazard Alerts
 
 See Program.cs to review code
+
+## Updates:
+
+Added DB Model, scripts to create DB structure and function to add records to database. 
 
 ## Want to get data for your location?
 

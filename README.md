@@ -11,6 +11,12 @@ Change Program.cs line 444 lat & lon. Keep decimal to 4 or less.
 
 "https://forecast.weather.gov/MapClick.php?lat=34.8241&lon=-92.2794&unit=0&lg=english&FcstType=json";
 
+## Debug Mode
+
+Change Program.cs line 29
+
+public bool debug = true;
+
 ## Json Forecast
 
 Parses out forecast in DB friendly class format

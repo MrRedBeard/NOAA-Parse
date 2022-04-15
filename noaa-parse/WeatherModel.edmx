@@ -1,0 +1,199 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+      <Schema Namespace="WeatherModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="WeatherAlerts">
+          <Key>
+            <PropertyRef Name="WeatherAlertID" />
+          </Key>
+          <Property Name="WeatherAlertID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Type" Type="varchar" MaxLength="150" />
+          <Property Name="ExpireDateTime" Type="datetime" />
+          <Property Name="AlertText" Type="varchar" MaxLength="8000" />
+          <Property Name="Active" Type="bit" />
+        </EntityType>
+        <EntityType Name="WeatherForecasts">
+          <Key>
+            <PropertyRef Name="WeatherForecastID" />
+          </Key>
+          <Property Name="WeatherForecastID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="ForecastWhen" Type="varchar" MaxLength="50" />
+          <Property Name="TemperatureLabel" Type="varchar" MaxLength="50" />
+          <Property Name="Temperature" Type="int" />
+          <Property Name="PercPrecip" Type="int" />
+          <Property Name="WeatherTitle" Type="varchar" MaxLength="50" />
+          <Property Name="WeatherText" Type="varchar" MaxLength="500" />
+          <Property Name="Icon" Type="varchar" MaxLength="50" />
+          <Property Name="Active" Type="bit" />
+        </EntityType>
+        <EntityType Name="WeatherObservations">
+          <Key>
+            <PropertyRef Name="WeatherObservationID" />
+          </Key>
+          <Property Name="WeatherObservationID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Elevation" Type="float" />
+          <Property Name="Latitude" Type="float" />
+          <Property Name="Longitude" Type="float" />
+          <Property Name="Date" Type="datetime" />
+          <Property Name="Temperature" Type="int" />
+          <Property Name="TemperatureLabel" Type="varchar" MaxLength="50" />
+          <Property Name="DewPoint" Type="int" />
+          <Property Name="RelativeHumidity" Type="int" />
+          <Property Name="WindSpeed" Type="int" />
+          <Property Name="WindDirection" Type="int" />
+          <Property Name="WindGust" Type="int" />
+          <Property Name="WeatherText" Type="varchar" MaxLength="500" />
+          <Property Name="Icon" Type="varchar" MaxLength="50" />
+          <Property Name="Visibility" Type="float" />
+          <Property Name="Altimeter" Type="float" />
+          <Property Name="Barometer" Type="float" />
+          <Property Name="WindChill" Type="int" />
+          <Property Name="Active" Type="bit" />
+        </EntityType>
+        <EntityContainer Name="WeatherModelStoreContainer">
+          <EntitySet Name="WeatherAlerts" EntityType="Self.WeatherAlerts" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="WeatherForecasts" EntityType="Self.WeatherForecasts" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="WeatherObservations" EntityType="Self.WeatherObservations" Schema="dbo" store:Type="Tables" />
+        </EntityContainer>
+      </Schema>
+    </edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="WeatherModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+        <EntityType Name="WeatherAlert">
+          <Key>
+            <PropertyRef Name="WeatherAlertID" />
+          </Key>
+          <Property Name="WeatherAlertID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Type" Type="String" MaxLength="150" FixedLength="false" Unicode="false" />
+          <Property Name="ExpireDateTime" Type="DateTime" Precision="3" />
+          <Property Name="AlertText" Type="String" MaxLength="8000" FixedLength="false" Unicode="false" />
+          <Property Name="Active" Type="Boolean" />
+        </EntityType>
+        <EntityType Name="WeatherForecast">
+          <Key>
+            <PropertyRef Name="WeatherForecastID" />
+          </Key>
+          <Property Name="WeatherForecastID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="ForecastWhen" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="TemperatureLabel" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="Temperature" Type="Int32" />
+          <Property Name="PercPrecip" Type="Int32" />
+          <Property Name="WeatherTitle" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="WeatherText" Type="String" MaxLength="500" FixedLength="false" Unicode="false" />
+          <Property Name="Icon" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="Active" Type="Boolean" />
+        </EntityType>
+        <EntityType Name="WeatherObservation">
+          <Key>
+            <PropertyRef Name="WeatherObservationID" />
+          </Key>
+          <Property Name="WeatherObservationID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Elevation" Type="Double" />
+          <Property Name="Latitude" Type="Double" />
+          <Property Name="Longitude" Type="Double" />
+          <Property Name="Date" Type="DateTime" Precision="3" />
+          <Property Name="Temperature" Type="Int32" />
+          <Property Name="TemperatureLabel" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="DewPoint" Type="Int32" />
+          <Property Name="RelativeHumidity" Type="Int32" />
+          <Property Name="WindSpeed" Type="Int32" />
+          <Property Name="WindDirection" Type="Int32" />
+          <Property Name="WindGust" Type="Int32" />
+          <Property Name="WeatherText" Type="String" MaxLength="500" FixedLength="false" Unicode="false" />
+          <Property Name="Icon" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="Visibility" Type="Double" />
+          <Property Name="Altimeter" Type="Double" />
+          <Property Name="Barometer" Type="Double" />
+          <Property Name="WindChill" Type="Int32" />
+          <Property Name="Active" Type="Boolean" />
+        </EntityType>
+        <EntityContainer Name="WeatherEntities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="WeatherAlerts" EntityType="Self.WeatherAlert" />
+          <EntitySet Name="WeatherForecasts" EntityType="Self.WeatherForecast" />
+          <EntitySet Name="WeatherObservations" EntityType="Self.WeatherObservation" />
+        </EntityContainer>
+      </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+        <EntityContainerMapping StorageEntityContainer="WeatherModelStoreContainer" CdmEntityContainer="WeatherEntities">
+          <EntitySetMapping Name="WeatherAlerts">
+            <EntityTypeMapping TypeName="WeatherModel.WeatherAlert">
+              <MappingFragment StoreEntitySet="WeatherAlerts">
+                <ScalarProperty Name="WeatherAlertID" ColumnName="WeatherAlertID" />
+                <ScalarProperty Name="Type" ColumnName="Type" />
+                <ScalarProperty Name="ExpireDateTime" ColumnName="ExpireDateTime" />
+                <ScalarProperty Name="AlertText" ColumnName="AlertText" />
+                <ScalarProperty Name="Active" ColumnName="Active" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="WeatherForecasts">
+            <EntityTypeMapping TypeName="WeatherModel.WeatherForecast">
+              <MappingFragment StoreEntitySet="WeatherForecasts">
+                <ScalarProperty Name="WeatherForecastID" ColumnName="WeatherForecastID" />
+                <ScalarProperty Name="ForecastWhen" ColumnName="ForecastWhen" />
+                <ScalarProperty Name="TemperatureLabel" ColumnName="TemperatureLabel" />
+                <ScalarProperty Name="Temperature" ColumnName="Temperature" />
+                <ScalarProperty Name="PercPrecip" ColumnName="PercPrecip" />
+                <ScalarProperty Name="WeatherTitle" ColumnName="WeatherTitle" />
+                <ScalarProperty Name="WeatherText" ColumnName="WeatherText" />
+                <ScalarProperty Name="Icon" ColumnName="Icon" />
+                <ScalarProperty Name="Active" ColumnName="Active" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="WeatherObservations">
+            <EntityTypeMapping TypeName="WeatherModel.WeatherObservation">
+              <MappingFragment StoreEntitySet="WeatherObservations">
+                <ScalarProperty Name="WeatherObservationID" ColumnName="WeatherObservationID" />
+                <ScalarProperty Name="Elevation" ColumnName="Elevation" />
+                <ScalarProperty Name="Latitude" ColumnName="Latitude" />
+                <ScalarProperty Name="Longitude" ColumnName="Longitude" />
+                <ScalarProperty Name="Date" ColumnName="Date" />
+                <ScalarProperty Name="Temperature" ColumnName="Temperature" />
+                <ScalarProperty Name="TemperatureLabel" ColumnName="TemperatureLabel" />
+                <ScalarProperty Name="DewPoint" ColumnName="DewPoint" />
+                <ScalarProperty Name="RelativeHumidity" ColumnName="RelativeHumidity" />
+                <ScalarProperty Name="WindSpeed" ColumnName="WindSpeed" />
+                <ScalarProperty Name="WindDirection" ColumnName="WindDirection" />
+                <ScalarProperty Name="WindGust" ColumnName="WindGust" />
+                <ScalarProperty Name="WeatherText" ColumnName="WeatherText" />
+                <ScalarProperty Name="Icon" ColumnName="Icon" />
+                <ScalarProperty Name="Visibility" ColumnName="Visibility" />
+                <ScalarProperty Name="Altimeter" ColumnName="Altimeter" />
+                <ScalarProperty Name="Barometer" ColumnName="Barometer" />
+                <ScalarProperty Name="WindChill" ColumnName="WindChill" />
+                <ScalarProperty Name="Active" ColumnName="Active" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+        </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </Connection>
+    <Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="False" />
+        <DesignerProperty Name="IncludeForeignKeysInModel" Value="true" />
+        <DesignerProperty Name="UseLegacyProvider" Value="false" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="None" />
+      </DesignerInfoPropertySet>
+    </Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <Diagrams></Diagrams>
+  </Designer>
+</edmx:Edmx>

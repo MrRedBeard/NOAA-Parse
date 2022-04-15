@@ -9,6 +9,7 @@ using HtmlAgilityPack;
 using Fizzler.Systems.HtmlAgilityPack;
 using System.Text.RegularExpressions;
 using System.Globalization;
+using System.Data;
 
 namespace noaa_parse
 {
@@ -34,6 +35,90 @@ namespace noaa_parse
             Alerts = GetAlerts();
 
             ParsedForecast = ParseForecast();
+
+            UpdateDB();
+        }
+
+        public void UpdateDB()
+        {
+            WeatherEntities db = new WeatherEntities();
+            
+            foreach (NOAAAlerts Alert in Alerts)
+            {
+                bool exists = db.WeatherAlerts.Where(x => x.Type == Alert.Type && x.ExpireDateTime == Alert.ExpireDateTime).ToList().Count > 0;
+
+                if (!exists)
+                {
+                    WeatherAlert newAlert = new WeatherAlert();
+                    newAlert.Active = true;
+                    newAlert.AlertText = Alert.AlertText;
+                    newAlert.ExpireDateTime = Alert.ExpireDateTime;
+                    newAlert.Type = Alert.Type;
+
+                    db.WeatherAlerts.Add(newAlert);
+                    db.SaveChanges();
+                }
+            }
+
+            List<WeatherObservation> observations = db.WeatherObservations.Where(x => x.Active == true).ToList();
+            foreach (WeatherObservation observation in observations)
+            {
+                observation.Active = false;
+
+                db.WeatherObservations.Attach(observation);
+                db.Entry(observation).State = System.Data.Entity.EntityState.Modified;
+                db.SaveChanges();
+            }
+
+            WeatherObservation newObservation = new WeatherObservation();
+            newObservation.Active = true;
+            newObservation.Altimeter = ParsedForecast.stationObservation.Altimeter;
+            newObservation.Barometer = ParsedForecast.stationObservation.Barometer;
+            newObservation.Date = ParsedForecast.stationObservation.Date;
+            newObservation.DewPoint = ParsedForecast.stationObservation.DewPoint;
+            newObservation.Elevation = ParsedForecast.stationObservation.Elevation;
+            newObservation.Icon = ParsedForecast.stationObservation.Icon;
+            newObservation.Latitude = ParsedForecast.stationObservation.Latitude;
+            newObservation.Longitude = ParsedForecast.stationObservation.Longitude;
+            newObservation.RelativeHumidity = ParsedForecast.stationObservation.RelativeHumidity;
+            newObservation.Temperature = ParsedForecast.stationObservation.Temperature;
+            newObservation.TemperatureLabel = ParsedForecast.stationObservation.TemperatureLabel;
+            newObservation.Visibility = ParsedForecast.stationObservation.Visibility;
+            newObservation.WeatherText = ParsedForecast.stationObservation.WeatherText;
+            newObservation.WindChill = ParsedForecast.stationObservation.WindChill;
+            newObservation.WindDirection = ParsedForecast.stationObservation.WindDirection;
+            newObservation.WindGust = ParsedForecast.stationObservation.WindGust;
+            newObservation.WindSpeed = ParsedForecast.stationObservation.WindSpeed;
+
+            db.WeatherObservations.Add(newObservation);
+            db.SaveChanges();
+
+            List<WeatherForecast> forecasts = db.WeatherForecasts.Where(x => x.Active == true).ToList();
+            foreach (WeatherForecast forecast in forecasts)
+            {
+                forecast.Active = false;
+
+                db.WeatherForecasts.Attach(forecast);
+                db.Entry(forecast).State = System.Data.Entity.EntityState.Modified;
+                db.SaveChanges();
+            }
+
+
+            foreach (InternalNOAAForecast.LocalForecast cast in ParsedForecast.localForecast)
+            {
+                WeatherForecast forecast = new WeatherForecast();
+                forecast.Active = true;
+                forecast.ForecastWhen = cast.When;
+                forecast.Icon = cast.Icon;
+                forecast.PercPrecip = cast.PercPrecip;
+                forecast.Temperature = cast.Temperature;
+                forecast.TemperatureLabel = cast.TemperatureLabel;
+                forecast.WeatherText = cast.WeatherText;
+                forecast.WeatherTitle = cast.WeatherTitle;
+
+                db.WeatherForecasts.Add(forecast);
+                db.SaveChanges();
+            }
         }
 
         public InternalNOAAForecast ParseForecast()
@@ -629,8 +714,3 @@ Safety, for Work, for Fun</span> - FOR LIFE</div>
     }
     
 }
-
-
-
-
-
